@@ -4,9 +4,9 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>MongoDB: Aggregation framework</title>
+		<title>MongoDB: Location based applications</title>
 
-		<meta name="description" content="Aggregation framework">
+		<meta name="description" content="MongoDB: Location based applications">
 		<meta name="author" content="Vitaly Domnikov">
 
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -37,223 +37,184 @@
 			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
 
+<section>
+					<p>
+						<img src="img/amelia.png">
+					</p>
+				</section>
+
 				<section>
-					<h3>MongoDB<br/>Aggregation framework</h3>
+					<h3>MongoDB for location based applications</h3>
 					<p>
 						<small>Created by <a href="http://bit.ly/VitalyDomnikov">Vitaly Domnikov</a> / <a href="http://twitter.com/dotcypress">@dotcypress</a></small>
 					</p>
 				</section>
 
 				<section>
-					<h2>Pipelines</h2>
-					<ul>
-						<li>$project</li>
-						<li>$match</li>
-						<li>$limit</li>
-						<li>$skip</li>
-						<li>$unwind</li>
-						<li>$group</li>
-						<li>$sort</li>
-					</ul>
+					<h2>Look around</h2>
+					<p>
+						<img src="img/map.png">
+					</p>
 				</section>
 
 				<section>
-						<h2>Test data</h2>
+					<h2>No money - no honey</h2>
+					<p>
+						<img src="img/atm.png">
+					</p>
+				</section>
+
+				<section>
+					<section>
+						<h2>Geospatial Indexes</h2>
+						<h4>We need data field</h4>
+						<pre><code class="javascript" contenteditable>
+location: [x, y]
+
+location: {x:1, y:2}
+					</code></pre>
+
+					<h4>and index</h4>
+					<pre><code class="javascript" contenteditable>
+db.atms.ensureIndex( { 'location' : '2d' } )
+					</code></pre>
+				  </section>
+
+					<section>
+						<h2>Queries</h2>
+						<ul>
+							<li>Proximity queries</li>
+							<li>Bounded queries</li>
+							<li>Exact queries</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Proximity queries</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({location: { $near: [-70, 40]}})
+						</code></pre>
+						<pre><code class="javascript" contenteditable>
+db.runCommand({geoNear: "atms", near: [x, y]})
+						</code></pre>
+					</section>
+					<section>
+						<h2>Queries results</h2>
 						<pre><code class="javascript" contenteditable>
 {
- title : "this is my title" ,
- author : "bob",
- posted : new Date (),
- pageViews : 5,
- tags : [ "fun", "good", "fun" ],
- comments : [
-    { author : "joe", text : "this is cool" },
-    { author : "sam", text : "this is bad" }
- ],
- other : { foo : 5 }
+   "ns" : "test.places",
+   "results" : [
+      {
+         "dis" : 3,
+         "obj" : {
+            "_id" : ObjectId(" ... "),
+            "location" : [-73, 39]
+         }
+      }
+   ],
+   ...
 }
-					</code></pre>
-				</section>
+						</code></pre>
+					</section>
 
-				<section>
-					<h2>Invocation</h2>
-					<pre><code class="javascript" contenteditable>
-db.articles.aggregate(
-  { $project : {
-     author : 1,
-     tags : 1,
-  }},
-  { $unwind : "$tags" },
-  { $group : {
-     _id : { tags : "$tags" },
-     authors : { $addToSet : "$author" }
-  }}
-);
-					</code></pre>
-				</section>
-
-				<section>
-					<h2>Invocation</h2>
-					<pre><code class="javascript" contenteditable>
-db.articles.aggregate(operator, operator, operator);
-					</code></pre>
-				</section>
-
-				<section>
 					<section>
-						<h2>$project</h2>
+						<h2>Distance Queries</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({
+	location: { $near: [-70,40], $maxDistance : 20 }
+})
+						</code></pre>
+						<pre><code class="javascript" contenteditable>
+db.runCommand({
+	geoNear: "atms", near:[x,y], $maxDistance : 20
+})
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Spherical Geometry</h2>
 						<ul>
-							<li>Include fields from the original document.</li>
-							<li>Insert computed fields.</li>
-							<li>Rename fields.</li>
-							<li>Create and populate fields that hold sub-documents.</li>
+							<li><code>find(..$nearSphere..)</code></li>
+							<li><code>find(..$centerSphere..)</code> </li>
+							<li><code>geoNear(..{ spherical: true }..)</code></li>
 						</ul>
 					</section>
 
 					<section>
-						<h2>$project</h2>
-						<pre><code class="javascript" contenteditable>
-db.article.aggregate({
-$project: {
-	_id: 0 ,
-	title: 1 ,
-	author: 1,
-	page_views: "$pageViews",
-	bar: "$other.foo",
-	views: { $add:["$pageViews", 10]}
-}});
-						</code></pre>
-					</section>
-
-					<section>
-						<h2>Expression operators</h2>
+						<h2>Distance Calculation</h2>
+						<p>The radius of the Earth is approximately:<p>
 						<ul>
-							<li>$add</li>
-							<li>$addToSet</li>
-							<li>$first</li>
-							<li>$last</li>
-							<li>$max</li>
-							<li>$min</li>
-							<li>$avg</li>
-							<li>$push</li>
-							<li>$sum</li>
-						</ul>
-					</section>
-				</section>
-
-				<section>
-					<h2>$match</h2>
-					<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-	{ $match: { author: "dave" }}
-);
-
-db.article.aggregate(
-    { $match: { score: { $gt: 50, $lte: 90 }}}
-);
-					</code></pre>
-				</section>
-
-				<section>
-					<h2>$limit</h2>
-					<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-    { $limit: 5 }
-);
-					</code></pre>
-				</section>
-
-				<section>
-					<h2>$skip</h2>
-					<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-    { $skip:10 }
-);
-					</code></pre>
-				</section>
-
-				<section>
-					<h2>$sort</h2>
-					<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-    { $sort: { age: -1, posts: 1}}
-);
-					</code></pre>
-				</section>
-
-				<section>
-					<section>
-						<h2>$unwind</h2>
-						<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-	{ $project: {
-		author: 1 ,
-		title: 1 ,
-		tags: 1
-	}},
-	{ $unwind : "$tags" }
-);
-						</code></pre>
-					</section>
-
-					<section>
-						<h2>$unwind</h2>
-						<pre><code class="javascript" contenteditable>
-[
-	{
-		"_id": ObjectId("4e6e4ef557b77501a49233f6"),
-		"title": "this is my title",
-		"author": "bob",
-		"tags": "fun"
-	},
-	{
-		"_id": ObjectId("4e6e4ef557b77501a49233f6"),
-		"title": "this is my title",
-		"author": "bob",
-		"tags": "good"
-	}
-]
-						</code></pre>
-					</section>
-
-				</section>
-
-				<section>
-					<section>
-						<h2>$group</h2>
-						<pre><code class="javascript" contenteditable>
-db.article.aggregate(
-    { $group : {
-        _id: "$author",
-        docsPerAuthor: { $sum : 1 },
-        viewsPerAuthor: { $sum : "$pageViews" }
-    }}
-);
-						</code></pre>
-					</section>
-
-					<section>
-						<h2>$group</h2>
-						<h2>Expression operators</h2>
-						<ul>
-							<li>$addToSet</li>
-							<li>$first</li>
-							<li>$last</li>
-							<li>$max</li>
-							<li>$min</li>
-							<li>$avg</li>
-							<li>$push</li>
-							<li>$sum</li>
+							<li>3963.192 miles</li>
+							<li>6378.137 kilometers.</li>
 						</ul>
 					</section>
 
+					<section>
+						<h2>Distance Multiplier</h2>
+						<pre><code class="javascript" contenteditable>
+db.runCommand({
+	geoNear: "atms",
+	near: [ -74, 40.74 ],
+	spherical: true,
+	distanceMultiplier: 6378.137
+})
+						</code></pre>
+					</section>
+
+					<section>
+							<h2>Bounded Queries</h2>
+							<ul>
+								<li>Circles</li>
+								<li>Rectangles</li>
+								<li>Polygons</li>
+							</ul>
+					</section>
+
+					<section>
+						<h2>Circles</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({"location":
+	{"$within": {"$center": [ [-74, 40.74], 10 ]}}
+})
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Rectangles</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({"location":
+	{"$within": {"$box": [ [-74, 40.74] ]}}
+})
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Polygons</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({"location":
+	{"$polygon": {"$box": [ [ 0, 0], [3, 3], [6, 0] ] }}
+})
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Exact queries</h2>
+						<pre><code class="javascript" contenteditable>
+db.atms.find({"location": [ [-74, 40.74] ]})
+						</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<p>
+						<img src="img/q.png">
+					</p>
 				</section>
 
 				<section>
 					<h1>THE END</h1>
 					<h3>BY Vitaly Domnikov / @dotcypress</h3>
 				</section>
-
 			</div>
 
 		</div>
@@ -271,8 +232,8 @@ db.article.aggregate(
 				history: true,
 				center: true,
 
-				theme: Reveal.getQueryHash().theme || 'night', // available themes are in /css/theme
-				transition: Reveal.getQueryHash().transition || 'zoom', // default/cube/page/concave/zoom/linear/fade/none
+				theme: Reveal.getQueryHash().theme || 'default', // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'page', // default/cube/page/concave/zoom/linear/fade/none
 
 				// Optional libraries used to extend on reveal.js
 				dependencies: [
